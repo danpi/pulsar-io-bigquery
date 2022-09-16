@@ -22,12 +22,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.pulsar.common.util.Reflections;
-import org.apache.pulsar.io.core.SinkContext;
+import org.apache.pulsar.functions.api.BaseContext;
 import org.apache.pulsar.io.core.annotations.FieldDoc;
 
 /**
@@ -36,8 +38,8 @@ import org.apache.pulsar.io.core.annotations.FieldDoc;
 @Slf4j
 public class IOConfigUtils {
 
-    public static <T> T loadWithSecrets(Map<String, Object> map, Class<T> clazz, SinkContext sinkContext) {
-        return loadWithSecrets(map, clazz, secretName -> sinkContext.getSecret(secretName));
+    public static <T> T loadWithSecrets(Map<String, Object> map, Class<T> clazz, BaseContext context) {
+        return loadWithSecrets(map, clazz, secretName -> context.getSecret(secretName));
     }
 
 
@@ -75,6 +77,13 @@ public class IOConfigUtils {
                 }
             }
         }
-        return new ObjectMapper().convertValue(configs, clazz);
+
+        List<String> fieldLists = Reflections.getAllFields(clazz).stream().map(field -> field.getName()).collect(
+                Collectors.toList());
+        Map<String, Object> finalConfigs =
+                configs.entrySet().stream().filter(kv -> fieldLists.contains(kv.getKey()))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return new ObjectMapper().convertValue(finalConfigs, clazz);
     }
 }

@@ -53,7 +53,7 @@
 
     <!-- test dependencies -->
     <junit.version>4.12</junit.version>
-    <mockito.version>2.22.0</mockito.version>
+    <mockito.version>3.11.2</mockito.version>
     <powermock.version>2.0.0-beta.5</powermock.version>
     <testcontainers.version>1.8.3</testcontainers.version>
     <slf4j.version>1.7.25</slf4j.version>
@@ -135,7 +135,7 @@
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
+        <artifactId>mockito-inline</artifactId>
         <version>${mockito.version}</version>
       </dependency>
       <dependency>
@@ -228,7 +228,7 @@
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <artifactId>mockito-inline</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -256,7 +256,18 @@
       <artifactId>pulsar-client-original</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.pulsar</groupId>
+      <artifactId>pulsar-functions-local-runner-original</artifactId>
+      <version>2.9.3</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-slf4j-impl</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 
   <build>
@@ -275,7 +286,7 @@
               <compilerArg>-Xlint:unchecked</compilerArg>
               <!-- https://issues.apache.org/jira/browse/MCOMPILER-205 -->
               <compilerArg>-Xpkginfo:always</compilerArg>
-	        </compilerArgs>
+            </compilerArgs>
           </configuration>
         </plugin>
         <!-- test -->
@@ -412,7 +423,7 @@
     </pluginManagement>
 
     <plugins>
-      <!-- compile --> 
+      <!-- compile -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
