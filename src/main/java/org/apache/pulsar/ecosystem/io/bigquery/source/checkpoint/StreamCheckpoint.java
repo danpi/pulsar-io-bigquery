@@ -36,8 +36,8 @@ public class StreamCheckpoint {
         this.stateType = StateType.READING;
     }
 
-    public static String getCheckpointStreamKeyFormat(String sourceName) {
-        return String.format(CheckpointStreamKeyFormat, sourceName);
+    public static String getCheckpointStreamKeyFormat(String stream) {
+        return String.format(CheckpointStreamKeyFormat, stream);
     }
 
     public void updateOffset(long offset) {

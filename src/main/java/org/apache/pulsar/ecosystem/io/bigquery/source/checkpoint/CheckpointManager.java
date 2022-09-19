@@ -113,7 +113,8 @@ public class CheckpointManager {
 
     public StreamCheckpoint getStreamCheckpoint(String stream) throws IOException {
         StreamCheckpoint streamCheckpoint = null;
-        byte[] value = this.tableViewWrapper.getMessageByTableView(stream);
+        byte[] value =
+                this.tableViewWrapper.getMessageByTableView(StreamCheckpoint.getCheckpointStreamKeyFormat(stream));
         if (value == null) {
             return null;
         }

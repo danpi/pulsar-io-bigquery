@@ -185,6 +185,7 @@ public class BigQuerySource implements BatchSource<GenericRecord> {
     }
 
     private void stateCheck() {
+        log.info("session stateCheck");
         SessionCheckpoint sessionCheckpoint = checkpointManager.getSessionCheckpoint();
         if (sessionCheckpoint == null || sessionCheckpoint.getStateType().equals(StateType.FINISH)) {
             log.info("state don't need to update,state={}", sessionCheckpoint);

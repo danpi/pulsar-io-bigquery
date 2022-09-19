@@ -21,3 +21,5 @@ name: google-bigquery
 description: Pulsar Sink Connector for Google Cloud BigQuery
 sinkClass: org.apache.pulsar.ecosystem.io.bigquery.BigQuerySink
 sinkConfigClass: org.apache.pulsar.ecosystem.io.bigquery.BigQueryConfig
+sourceClass: org.apache.pulsar.ecosystem.io.bigquery.BigQuerySource
+sourceConfig.Class: org.apache.pulsar.ecosystem.io.bigquery.BigQuerySourceConfig

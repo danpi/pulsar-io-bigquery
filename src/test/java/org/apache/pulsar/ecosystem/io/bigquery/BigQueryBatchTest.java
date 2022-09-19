@@ -39,7 +39,7 @@ public class BigQueryBatchTest {
         config.put("foo", "bar");
         config.put("projectId", "bigquery-dev-001");
         config.put("datasetName", "mydataset");
-        config.put("tableName", "Produce");
+        config.put("tableName", "bgDemo02");
 
         final BatchSourceConfig batchSourceConfig = BatchSourceConfig.builder()
                 .discoveryTriggererClassName(BigQueryOnceTrigger.class.getName())
@@ -52,9 +52,9 @@ public class BigQueryBatchTest {
                         .className(BigQuerySource.class.getName())
                         .configs(config)
                         //.name("batchSourceDemo01")
-                        .name("batchSourceDemo")
+                        .name("batchSourceDemo06")
                         .parallelism(1)
-                        .topicName("persistent://public/default/batchsource01")
+                        .topicName("batch-source06")
                         .build();
 
         final LocalRunner localRunner =
