@@ -78,8 +78,8 @@ public class CheckpointManager {
         try {
             this.sessionCheckpoint = mapper.readValue(jsonString, SessionCheckpoint.class);
         } catch (IOException e) {
-            log.error("Parse the checkpoint for stream {} failed, jsonString: {} ",
-                    this.curStreamCheckpoint.getStream(), jsonString, e);
+            log.error("Parse the checkpoint for session failed,key:{} jsonString: {} ",
+                    source, jsonString, e);
             throw new IOException("Parse checkpoint failed");
         }
         return this.sessionCheckpoint;
@@ -124,9 +124,12 @@ public class CheckpointManager {
             streamCheckpoint = mapper.readValue(jsonString, StreamCheckpoint.class);
         } catch (IOException e) {
             log.error("Parse the checkpoint for stream {} failed, jsonString: {} ",
-                    this.curStreamCheckpoint.getStream(), jsonString, e);
+                    StreamCheckpoint.getCheckpointStreamKeyFormat(stream), jsonString, e);
             throw new IOException("Parse checkpoint failed");
         }
+        log.info("getStreamCheckpoint success,key={},value={}",
+                StreamCheckpoint.getCheckpointStreamKeyFormat(stream),
+                streamCheckpoint.toString());
         return streamCheckpoint;
     }
 }

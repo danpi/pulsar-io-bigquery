@@ -22,13 +22,17 @@ import com.google.cloud.bigquery.storage.v1.ReadStream;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.pulsar.ecosystem.io.bigquery.source.reader.ReadSessionResponse;
 
 /**
  * The session info checkpoint.
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SessionCheckpoint {
     protected static final String CheckpointSessionKeyFormat = "checkpoint-session:%s";
     private String sourceName;

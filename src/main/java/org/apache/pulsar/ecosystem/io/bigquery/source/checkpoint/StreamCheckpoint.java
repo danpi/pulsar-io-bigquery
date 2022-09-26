@@ -18,12 +18,16 @@
  */
 package org.apache.pulsar.ecosystem.io.bigquery.source.checkpoint;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * The stream checkpoint position.
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class StreamCheckpoint {
     protected static final String CheckpointStreamKeyFormat = "checkpoint-stream:%s";
     String stream;
