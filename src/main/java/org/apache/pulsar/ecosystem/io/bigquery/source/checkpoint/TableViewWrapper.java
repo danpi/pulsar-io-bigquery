@@ -37,26 +37,20 @@ public class TableViewWrapper {
 
     public TableViewWrapper(SourceContext sourceContext) throws Exception {
         this.sourceContext = sourceContext;
-        buildPulsarClient();
+        this.pulsarClient = sourceContext.getPulsarClient();
         this.producer =
-                pulsarClient.newProducer(Schema.BYTES).topic(sourceContext.getSourceName() + PULSAR_INTERNAL_TOPIC)
+                this.pulsarClient.newProducer(Schema.BYTES).topic(sourceContext.getSourceName() + PULSAR_INTERNAL_TOPIC)
                         .create();
         this.tv = pulsarClient.newTableViewBuilder(Schema.BYTES)
                 .topic(sourceContext.getSourceName() + PULSAR_INTERNAL_TOPIC).create();
     }
 
-    private void buildPulsarClient() {
-        if (pulsarClient == null) {
-            pulsarClient = sourceContext.getPulsarClient();
-        }
-    }
-
     public void writeMessage(String key, byte[] msgBody) throws PulsarClientException {
-        producer.newMessage().value(msgBody).key(key).send();
+        this.producer.newMessage().value(msgBody).key(key).send();
     }
 
     public byte[] getMessageByTableView(String key) {
-        return tv.get(key);
+        return this.tv.get(key);
     }
 
 }

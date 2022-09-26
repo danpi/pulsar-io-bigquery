@@ -42,7 +42,7 @@ public class SessionCheckpoint {
     private List<String> streamList;
     private BigInteger totalNum;
     private long finishNum;
-    private String schema;  //bigQuery schema
+    private String bigQuerySchema;
 
     public SessionCheckpoint(ReadSessionResponse session, String sourceName) {
         this.sourceName = sourceName;
@@ -50,16 +50,12 @@ public class SessionCheckpoint {
         this.streamList = session.getReadSession().getStreamsList().stream().map(ReadStream::getName).collect(
                 Collectors.toList());
         this.totalNum = session.getReadTableInfo().getNumRows();
-        this.schema = session.getReadSession().getAvroSchema().getSchema();
+        this.bigQuerySchema = session.getReadSession().getAvroSchema().getSchema();
         this.createTime = System.currentTimeMillis();
         this.stateType = StateType.READING;
     }
 
     public static String getCheckpointSessionKeyFormat(String sourceName) {
         return String.format(CheckpointSessionKeyFormat, sourceName);
-    }
-
-    public void updateSessionCheckpointState(StateType stateType) {
-        this.stateType = stateType;
     }
 }

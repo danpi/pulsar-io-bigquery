@@ -18,6 +18,7 @@
  */
 package org.apache.pulsar.ecosystem.io.bigquery.source.record;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,7 +45,16 @@ public class BigQueryRecord implements Record<GenericRecord> {
     private StreamStateChecker streamStateChecker;
     private AtomicInteger processingException;
 
-
+    /**
+     * bigquery record.
+     *
+     * @param rowRecordData
+     * @param topic                 Destination topic.
+     * @param offset                The offset in a stream.
+     * @param ackCount              The number of messages send to pulsar.
+     * @param streamStateChecker    The checker finish when all messages send to pulsar.
+     * @param processingException   If a message fails to be sent, it is incremented.
+     */
     public BigQueryRecord(org.apache.avro.generic.GenericRecord rowRecordData,
                           String topic,
                           long offset,
@@ -57,7 +67,7 @@ public class BigQueryRecord implements Record<GenericRecord> {
         this.ackCount = ackCount;
         this.streamStateChecker = streamStateChecker;
         this.processingException = processingException;
-        value = getGenericRecord(this.rowRecordData);
+        this.value = getGenericRecord(this.rowRecordData);
     }
 
     public static void setPulsarSchema(GenericSchema<GenericRecord> pulsarSchema) {
@@ -113,7 +123,8 @@ public class BigQueryRecord implements Record<GenericRecord> {
         return Optional.empty();
     }
 
-    public static GenericRecord getGenericRecord(org.apache.avro.generic.GenericRecord rowRecordData) {
+    @VisibleForTesting
+    protected static GenericRecord getGenericRecord(org.apache.avro.generic.GenericRecord rowRecordData) {
         GenericRecordBuilder builder = pulsarSchema.newRecordBuilder();
         org.apache.avro.Schema avroSchema =
                 new org.apache.avro.Schema.Parser().parse(new String(pulsarSchema.getSchemaInfo().getSchema()));

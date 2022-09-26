@@ -23,9 +23,7 @@ package org.apache.pulsar.ecosystem.io.bigquery.source.checkpoint;
  */
 public enum StateType {
     FINISH("finish"), READING("reading");
-    private String state;
 
     StateType(String state) {
-        this.state = state;
     }
 }

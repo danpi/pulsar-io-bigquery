@@ -58,17 +58,17 @@ import org.apache.pulsar.io.core.SourceContext;
 public class SourceReader implements Runnable {
     private volatile boolean running;
     @Getter
-    private String curStream;
+    private String currentStream;
     @Getter
-    private long curOffset;
+    private long currentOffset;
     @Getter
     @Setter
     private StateType stateType;
     private AtomicLong ackCount;
     private DatumReader<GenericRecord> datumReader;
-    private BinaryDecoder decoder = null;
-    private GenericRecord row = null;
-    private String bigQuerySchema = null;
+    private BinaryDecoder decoder;
+    private GenericRecord row;
+    private String bigQuerySchema;
     private Schema bigQueryAvroSchema;
     private GenericSchema<org.apache.pulsar.client.api.schema.GenericRecord> pulsarSchema;
     private final LinkedBlockingQueue<Record<org.apache.pulsar.client.api.schema.GenericRecord>> queue;
@@ -96,8 +96,8 @@ public class SourceReader implements Runnable {
         this.bigQueryAvroSchema = new Schema.Parser().parse(schema);
         this.pulsarSchema = convertToPulsarSchema(bigQueryAvroSchema, bigQuerySchema);
         this.datumReader = new GenericDatumReader<>(bigQueryAvroSchema);
-        this.curStream = checkpoint.getStream();
-        this.curOffset = checkpoint.getOffset();
+        this.currentStream = checkpoint.getStream();
+        this.currentOffset = checkpoint.getOffset();
         this.stateType = checkpoint.getStateType();
         this.ackCount = new AtomicLong(0);
         this.streamStateChecker = new StreamStateChecker(checkpoint.getStream());
@@ -107,7 +107,7 @@ public class SourceReader implements Runnable {
     @Override
     public void run() {
         ReadRowsRequest readRowsRequest =
-                ReadRowsRequest.newBuilder().setReadStream(curStream).setOffset(curOffset).build();
+                ReadRowsRequest.newBuilder().setReadStream(currentStream).setOffset(currentOffset).build();
 
         ServerStreamingCallable<ReadRowsRequest, ReadRowsResponse> callable = bigQueryReadClient.readRowsCallable();
         ServerStream<ReadRowsResponse> readRowsResponses = callable.call(readRowsRequest);
@@ -122,21 +122,22 @@ public class SourceReader implements Runnable {
             }
         }
         streamStateChecker.notifySendAll();
-        log.info("all rows had put to queue and wait to complete, stream={} ,endOffset={}", curStream, curOffset);
+        log.debug("all rows put to queue, waiting to complete, stream={} ,endOffset={}", currentStream,
+                currentOffset);
         streamStateChecker.waitComplete();
-        log.info("stream send to pulsar finish, stream={},ackCount={}", curStream, ackCount);
+        log.info("finished sending stream send to pulsar, stream={},ackCount={}", currentStream, ackCount);
         putQueue(null);
     }
 
     public void processRows(AvroRows avroRows) throws IOException {
-        decoder = DecoderFactory.get().binaryDecoder(avroRows.getSerializedBinaryRows().toByteArray(), decoder);
+        this.decoder = DecoderFactory.get().binaryDecoder(avroRows.getSerializedBinaryRows().toByteArray(), decoder);
         while (!decoder.isEnd()) {
             GenericRecord rowRecord = datumReader.read(row, decoder);
-            streamStateChecker.addSendingOffset(curOffset);
-            putQueue(new BigQueryRecord(rowRecord, sourceContext.getOutputTopic(), curOffset, ackCount,
+            streamStateChecker.addSendingOffset(currentOffset);
+            putQueue(new BigQueryRecord(rowRecord, sourceContext.getOutputTopic(), currentOffset, ackCount,
                     streamStateChecker, processingException));
-            curOffset++;
-            log.info("offset=" + curOffset + " body=" + rowRecord.toString());
+            currentOffset++;
+            log.info("offset=" + currentOffset + " body=" + rowRecord.toString());
         }
     }
 

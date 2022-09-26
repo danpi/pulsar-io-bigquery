@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class StreamStateChecker {
-    private final long maxTimeWait = 1000;
+    private final long maxTimeWaitMs = 1000;
     private TreeSet<Long> unAckOffset = new TreeSet<>();
     private Lock unAckOffsetLock = new ReentrantLock();
     private Object object = new Object();
@@ -64,7 +64,7 @@ public class StreamStateChecker {
     }
 
     public void notifySendAll() {
-        isSendAll = true;
+        this.isSendAll = true;
         if (isSendAll && unAckOffset.isEmpty()) {
             synchronized (object) {
                 object.notify();
@@ -76,10 +76,10 @@ public class StreamStateChecker {
         while (!isStateDone()) {
             synchronized (object) {
                 try {
-                    object.wait(maxTimeWait);
-                    log.info("wait signal timeout");
+                    object.wait(maxTimeWaitMs);
+                    log.info("wait signal timeout={}", stream);
                 } catch (Exception e) {
-                    log.error("wait meet exception", e);
+                    log.error("wait meet exception={}", stream, e);
                 }
             }
         }

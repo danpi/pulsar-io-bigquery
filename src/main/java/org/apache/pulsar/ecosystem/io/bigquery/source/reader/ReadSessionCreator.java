@@ -51,14 +51,14 @@ public class ReadSessionCreator {
     }
 
     public ReadSessionResponse create(String selectFields,
-                                      String filters) {
+                                      String filters) throws Exception {
         TableId tableId = TableId.of(config.getProjectId(), config.getDatasetName(),
                 config.getTableName());
 
         TableInfo tableInfo = bigQuery.getTable(tableId);
         TableInfo actualTable = getActualTable(tableInfo);
 
-        String srcTable = toTablePath(actualTable.getTableId());
+        String srcTable = tablePathStr(actualTable.getTableId());
 
         ReadSession.TableReadOptions options = buildReadOptions(selectFields, filters);
 
@@ -76,7 +76,7 @@ public class ReadSessionCreator {
         return new ReadSessionResponse(session, actualTable);
     }
 
-    private String toTablePath(TableId tableId) {
+    private String tablePathStr(TableId tableId) {
         return format(
                 "projects/%s/datasets/%s/tables/%s",
                 tableId.getProject(), tableId.getDataset(), tableId.getTable());
@@ -86,7 +86,7 @@ public class ReadSessionCreator {
         return format("projects/%s", project);
     }
 
-    private TableInfo getActualTable(TableInfo tableInfo) {
+    private TableInfo getActualTable(TableInfo tableInfo) throws Exception {
         TableDefinition tableDefinition = tableInfo.getDefinition();
         TableDefinition.Type tableType = tableDefinition.getType();
         if (TableDefinition.Type.TABLE == tableType) {

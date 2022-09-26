@@ -79,7 +79,8 @@ public class BigQuerySourceConfig implements Serializable {
     private int checkpointIntervalSeconds;
 
     @FieldDoc(required = false, defaultValue = "", sensitive = true, help =
-            "Authentication key, use the environment variable to get the key when key is empty."
+            "BigQuery Authentication key."
+                    + "If not set the source will try to use the GOOGLE_APPLICATION_CREDENTIALS environment variable."
                     + "It is recommended to set this value to null,"
                     + "and then add the GOOGLE_APPLICATION_CREDENTIALS environment "
                     + "variable to point to the path of the authentication key json file"
@@ -93,7 +94,7 @@ public class BigQuerySourceConfig implements Serializable {
 
     public void validate() throws IllegalArgumentException {
         if (retainOrdering && maxParallelism > 1) {
-            log.error("if retainOrdering=true, maxParallelism should be set to 1 than {}", maxParallelism);
+            log.error("if retainOrdering=true, maxParallelism should be set to 1 but is {}", maxParallelism);
             throw new IllegalArgumentException("if retainOrdering=true, maxParallelism should be set to 1.");
         }
     }

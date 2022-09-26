@@ -25,7 +25,7 @@ import org.apache.pulsar.io.core.BatchSourceTriggerer;
 import org.apache.pulsar.io.core.SourceContext;
 
 /**
- * The once trigger for the bigquery source discover.
+ * The once trigger for the bigquery source discovery.
  */
 @Slf4j
 public class BigQueryOnceTrigger implements BatchSourceTriggerer {

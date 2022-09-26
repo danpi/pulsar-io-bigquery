@@ -105,7 +105,7 @@ public class CheckpointManagerTest {
         assertEquals(sessionCheckpointOutput.getSession(), sessionCheckpointInput.getSession());
         assertEquals(sessionCheckpointOutput.getSourceName(), sessionCheckpointInput.getSourceName());
         assertEquals(sessionCheckpointOutput.getTotalNum(), sessionCheckpointInput.getTotalNum());
-        assertEquals(sessionCheckpointOutput.getSchema(), sessionCheckpointInput.getSchema());
+        assertEquals(sessionCheckpointOutput.getBigQuerySchema(), sessionCheckpointInput.getBigQuerySchema());
     }
 
     private AvroSchema buildSchema() {

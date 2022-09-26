@@ -30,8 +30,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class StreamCheckpoint {
     protected static final String CheckpointStreamKeyFormat = "checkpoint-stream:%s";
-    String stream;
-    long offset;
+    private String stream;
+    private long offset;
     private StateType stateType;
 
     public StreamCheckpoint(String stream) {
@@ -48,9 +48,5 @@ public class StreamCheckpoint {
         if (offset > this.offset) {
             this.offset = offset;
         }
-    }
-
-    public void updateStateType(StateType type) {
-        this.stateType = stateType;
     }
 }

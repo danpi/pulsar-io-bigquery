@@ -40,7 +40,7 @@ public class CheckpointManager {
 
     @Getter
     @Setter
-    private StreamCheckpoint curStreamCheckpoint;
+    private StreamCheckpoint currentStreamCheckpoint;
 
     @Getter
     private SessionCheckpoint sessionCheckpoint;
@@ -61,6 +61,7 @@ public class CheckpointManager {
                     + "checkpoint: {}", current, current - start, key, value);
         } catch (Exception e) {
             log.error("Failed to update session checkpoint for key:{},value:{}", key, sessionCheckpoint);
+            throw new BQConnectorDirectFailException(e);
         }
     }
 
@@ -71,7 +72,7 @@ public class CheckpointManager {
         byte[] sessionBytes =
                 tableViewWrapper.getMessageByTableView(SessionCheckpoint.getCheckpointSessionKeyFormat(source));
         if (sessionBytes == null) {
-            throw new BQConnectorDirectFailException("session can not find");
+            throw new BQConnectorDirectFailException("Session not found.");
         }
         String jsonString = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(sessionBytes)).toString();
         ObjectMapper mapper = JsonUtils.JSON_MAPPER.get();
@@ -91,12 +92,13 @@ public class CheckpointManager {
             byte[] value = JsonUtils.JSON_MAPPER.get().writeValueAsBytes(streamCheckpoint);
             Long start = System.currentTimeMillis();
             this.tableViewWrapper.writeMessage(key, value);
-            this.curStreamCheckpoint = streamCheckpoint;
+            this.currentStreamCheckpoint = streamCheckpoint;
             Long current = System.currentTimeMillis();
             log.info("update stream checkpoint complete @ {}, cost:{} ms for stream: {}, "
                     + "checkpoint: {}", current, current - start, key, value);
         } catch (Exception e) {
             log.error("Failed to update stream checkpoint for key:{},value:{}", key, streamCheckpoint);
+            throw new BQConnectorDirectFailException(e);
         }
     }
 
@@ -104,11 +106,11 @@ public class CheckpointManager {
         StreamCheckpoint streamCheckpointByRemote = getStreamCheckpoint(stream);
         StreamCheckpoint streamCheckpoint = new StreamCheckpoint(stream);
         if (streamCheckpointByRemote == null) {
-            this.curStreamCheckpoint = streamCheckpoint;
+            this.currentStreamCheckpoint = streamCheckpoint;
         } else {
-            this.curStreamCheckpoint = streamCheckpointByRemote;
+            this.currentStreamCheckpoint = streamCheckpointByRemote;
         }
-        return this.curStreamCheckpoint;
+        return this.currentStreamCheckpoint;
     }
 
     public StreamCheckpoint getStreamCheckpoint(String stream) throws IOException {
