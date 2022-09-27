@@ -37,12 +37,13 @@ public class TableViewWrapper {
 
     public TableViewWrapper(SourceContext sourceContext) throws Exception {
         this.sourceContext = sourceContext;
-        this.pulsarClient = sourceContext.getPulsarClient();
+        this.pulsarClient = this.sourceContext.getPulsarClient();
         this.producer =
-                this.pulsarClient.newProducer(Schema.BYTES).topic(sourceContext.getSourceName() + PULSAR_INTERNAL_TOPIC)
+                this.pulsarClient.newProducer(Schema.BYTES)
+                        .topic(this.sourceContext.getSourceName() + PULSAR_INTERNAL_TOPIC)
                         .create();
         this.tv = pulsarClient.newTableViewBuilder(Schema.BYTES)
-                .topic(sourceContext.getSourceName() + PULSAR_INTERNAL_TOPIC).create();
+                .topic(this.sourceContext.getSourceName() + PULSAR_INTERNAL_TOPIC).create();
     }
 
     public void writeMessage(String key, byte[] msgBody) throws PulsarClientException {

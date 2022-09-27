@@ -19,6 +19,7 @@
 package org.apache.pulsar.ecosystem.io.bigquery.source.record;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -126,8 +127,8 @@ public class BigQueryRecord implements Record<GenericRecord> {
     @VisibleForTesting
     protected static GenericRecord getGenericRecord(org.apache.avro.generic.GenericRecord rowRecordData) {
         GenericRecordBuilder builder = pulsarSchema.newRecordBuilder();
-        org.apache.avro.Schema avroSchema =
-                new org.apache.avro.Schema.Parser().parse(new String(pulsarSchema.getSchemaInfo().getSchema()));
+        org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(
+                new String(pulsarSchema.getSchemaInfo().getSchema(), StandardCharsets.UTF_8));
         avroSchema.getFields().forEach(
                 field -> builder.set(field.name(), rowRecordData.get(field.name()))
         );

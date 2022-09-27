@@ -25,6 +25,7 @@ import com.google.cloud.bigquery.storage.v1.BigQueryReadClient;
 import com.google.cloud.bigquery.storage.v1.ReadRowsRequest;
 import com.google.cloud.bigquery.storage.v1.ReadRowsResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -169,7 +170,7 @@ public class SourceReader implements Runnable {
         SchemaInfo.SchemaInfoBuilder schemaInfoBuilder = SchemaInfo.builder();
         schemaInfoBuilder.name(bigQuerySchema.getName());
         schemaInfoBuilder.type(SchemaType.AVRO);
-        schemaInfoBuilder.schema(bigQuerySchemaString.getBytes());
+        schemaInfoBuilder.schema(bigQuerySchemaString.getBytes(StandardCharsets.UTF_8));
 
         return org.apache.pulsar.client.api.Schema.generic(schemaInfoBuilder.build());
     }

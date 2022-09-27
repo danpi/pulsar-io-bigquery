@@ -40,15 +40,21 @@ public class StreamStateChecker {
     }
 
     public void addSendingOffset(Long offset) {
-        unAckOffsetLock.lock();
-        unAckOffset.add(offset);
-        unAckOffsetLock.unlock();
+        try {
+            unAckOffsetLock.lock();
+            unAckOffset.add(offset);
+        } finally {
+            unAckOffsetLock.unlock();
+        }
     }
 
     public void updateAckOffset(Long offset) {
-        unAckOffsetLock.lock();
-        unAckOffset.remove(offset);
-        unAckOffsetLock.unlock();
+        try {
+            unAckOffsetLock.lock();
+            unAckOffset.remove(offset);
+        } finally {
+            unAckOffsetLock.unlock();
+        }
         if (isSendAll && unAckOffset.isEmpty()) {
             synchronized (object) {
                 object.notify();
@@ -57,9 +63,13 @@ public class StreamStateChecker {
     }
 
     public long getMinUnAckOffset() {
-        unAckOffsetLock.lock();
-        long minUnAckOffset = unAckOffset.first();
-        unAckOffsetLock.unlock();
+        long minUnAckOffset = 0;
+        try {
+            unAckOffsetLock.lock();
+            minUnAckOffset = unAckOffset.first();
+        } finally {
+            unAckOffsetLock.unlock();
+        }
         return minUnAckOffset;
     }
 
