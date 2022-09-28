@@ -20,6 +20,11 @@ package org.apache.pulsar.ecosystem.io.bigquery.source.reader;
 
 import static java.lang.String.format;
 import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.Job;
+import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
@@ -30,8 +35,12 @@ import com.google.cloud.bigquery.storage.v1.ReadSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.pulsar.ecosystem.io.bigquery.BigQuerySourceConfig;
 import org.apache.pulsar.ecosystem.io.bigquery.exception.BQConnectorDirectFailException;
@@ -39,28 +48,42 @@ import org.apache.pulsar.ecosystem.io.bigquery.exception.BQConnectorDirectFailEx
 /**
  * The helper class which provides to create bigquery session.
  */
+@Slf4j
 public class ReadSessionCreator {
+    private static final String TEMP_TABLE_FORMAT = "_bqt_%s";
     private final BigQuerySourceConfig config;
     private final BigQuery bigQuery;
     private final BigQueryReadClient bigQueryReadClient;
+    private final boolean isTemporaryTable;
+
+    private TableId actualTableId;
 
     public ReadSessionCreator(BigQuerySourceConfig config) {
         this.config = config;
         this.bigQuery = config.createBigQuery();
         this.bigQueryReadClient = config.createBigQueryReadClient();
+        this.isTemporaryTable = StringUtils.isNotEmpty(this.config.getSql());
     }
 
-    public ReadSessionResponse create(String selectFields,
-                                      String filters) throws Exception {
-        TableId tableId = TableId.of(config.getProjectId(), config.getDatasetName(),
-                config.getTableName());
+    public ReadSessionResponse createReadSession() throws BQConnectorDirectFailException {
+        this.actualTableId =
+                TableId.of(this.config.getProjectId(), this.config.getDatasetName(), this.config.getTableName());
+        if (this.isTemporaryTable) {
+            TableInfo sqlTableInfo =
+                    materializeQueryToTable(this.config.getSql(), this.config.getExpirationTimeInMinutes());
+            this.actualTableId = sqlTableInfo.getTableId();
+        }
+        return this.create(this.actualTableId);
+    }
 
-        TableInfo tableInfo = bigQuery.getTable(tableId);
+    private ReadSessionResponse create(TableId tableId) throws BQConnectorDirectFailException {
+        TableInfo tableInfo = this.bigQuery.getTable(tableId);
         TableInfo actualTable = getActualTable(tableInfo);
 
         String srcTable = tablePathStr(actualTable.getTableId());
 
-        ReadSession.TableReadOptions options = buildReadOptions(selectFields, filters);
+        ReadSession.TableReadOptions options =
+                buildReadOptions(this.config.getSelectedFields(), this.config.getFilters());
 
         ReadSession.Builder sessionBuilder =
                 ReadSession.newBuilder()
@@ -71,8 +94,8 @@ public class ReadSessionCreator {
                 CreateReadSessionRequest.newBuilder()
                         .setParent(getParent(tableId.getProject()))
                         .setReadSession(sessionBuilder.build())
-                        .setMaxStreamCount(config.getMaxParallelism());
-        ReadSession session = bigQueryReadClient.createReadSession(requestBuilder.build());
+                        .setMaxStreamCount(this.config.getMaxParallelism());
+        ReadSession session = this.bigQueryReadClient.createReadSession(requestBuilder.build());
         return new ReadSessionResponse(session, actualTable);
     }
 
@@ -86,7 +109,7 @@ public class ReadSessionCreator {
         return format("projects/%s", project);
     }
 
-    private TableInfo getActualTable(TableInfo tableInfo) throws Exception {
+    private TableInfo getActualTable(TableInfo tableInfo) throws BQConnectorDirectFailException {
         TableDefinition tableDefinition = tableInfo.getDefinition();
         TableDefinition.Type tableType = tableDefinition.getType();
         if (TableDefinition.Type.TABLE == tableType) {
@@ -139,4 +162,57 @@ public class ReadSessionCreator {
                 Arrays.stream(filterArray).map(filter -> "(" + filter + ")").collect(Collectors.joining(" AND ")));
     }
 
+    /**
+     * materialize a table by the querySql.
+     * @param querySql the sql query on BigQuery.
+     * @param expirationTimeInMinutes the expiration time until the table is expired or auto-deleted.
+     * @return bigQuery table information.
+     */
+    @VisibleForTesting
+    protected TableInfo materializeQueryToTable(String querySql, int expirationTimeInMinutes)
+            throws BQConnectorDirectFailException {
+        TableId tableId = buildTemporaryTableId();
+        JobInfo jobInfo = JobInfo.of(QueryJobConfiguration.newBuilder(querySql)
+                .setDestinationTable(tableId)
+                .build());
+        log.debug("running query job info={}", jobInfo);
+        Job job = waitForJob(this.bigQuery.create(jobInfo));
+        if (job.getStatus().getError() != null) {
+            log.error("materialize query to table failed,error={}", job.getStatus().getError());
+            throw new BQConnectorDirectFailException(job.getStatus().getError().getMessage());
+        }
+        log.info("job has finished={}", job);
+        //add expiration to the temporary table
+        TableInfo table = this.bigQuery.getTable(tableId);
+        long expirationTime = table.getCreationTime() + TimeUnit.MINUTES.toMillis(expirationTimeInMinutes);
+        Table temporaryTable = this.bigQuery.update(table.toBuilder().setExpirationTime(expirationTime).build());
+        return temporaryTable;
+    }
+
+    private TableId buildTemporaryTableId() {
+        String temporaryTableName =
+                String.format(TEMP_TABLE_FORMAT,
+                        UUID.randomUUID().toString().toLowerCase(Locale.ENGLISH).replace(" - ", ""));
+        return TableId.of(config.getProjectId(), config.getDatasetName(), temporaryTableName);
+    }
+
+    private Job waitForJob(Job job) throws BQConnectorDirectFailException {
+        try {
+            return job.waitFor();
+        } catch (BigQueryException e) {
+            log.error("wait for job failed,e={}", e.getError());
+            throw new BQConnectorDirectFailException("query sql failed", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BQConnectorDirectFailException(String.format("Job %s has been interrupted", job.getJobId()), e);
+        }
+    }
+
+    public void deleteTemporaryTable() {
+        if (this.isTemporaryTable && this.actualTableId.getTable()
+                .startsWith(StringUtils.substring(TEMP_TABLE_FORMAT, 0, 5))) {
+            log.info("delete temporary table,tableId={}", actualTableId);
+            this.bigQuery.delete(actualTableId);
+        }
+    }
 }

@@ -43,6 +43,8 @@ public class BigQuerySourceConfigTest {
         mapConfig.put("snapshotTime", 1662709773L);
         mapConfig.put("queueSize", 1000);
         mapConfig.put("maxParallelism", 4);
+        mapConfig.put("sql", "select * from xxx");
+        mapConfig.put("expirationTimeInMinutes", 10);
         mapConfig.put("selectedFields", "col1");
         mapConfig.put("filters", "id>10");
         mapConfig.put("retainOrdering", true);
@@ -57,6 +59,8 @@ public class BigQuerySourceConfigTest {
         assertEquals(config.getSnapshotTime(), 1662709773L);
         assertEquals(config.getQueueSize(), 1000);
         assertEquals(config.getMaxParallelism(), 4);
+        assertEquals(config.getSql(), "select * from xxx");
+        assertEquals(config.getExpirationTimeInMinutes(), 10);
         assertEquals(config.getFilters(), "id>10");
         assertEquals(config.getSelectedFields(), "col1");
         assertTrue(config.getRetainOrdering());
@@ -79,6 +83,8 @@ public class BigQuerySourceConfigTest {
         assertEquals(config.getSnapshotTime(), -1);
         assertEquals(config.getQueueSize(), 10000);
         assertEquals(config.getMaxParallelism(), 1);
+        assertNull(config.getSql());
+        assertEquals(config.getExpirationTimeInMinutes(), 1440);
         assertNull(config.getFilters());
         assertNull(config.getSelectedFields());
         assertFalse(config.getRetainOrdering());

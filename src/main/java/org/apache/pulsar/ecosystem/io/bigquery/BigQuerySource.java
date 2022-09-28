@@ -60,6 +60,7 @@ public class BigQuerySource implements BatchSource<GenericRecord> {
     private LinkedBlockingQueue<Record<GenericRecord>> queue;
     private CheckpointManager checkpointManager;
     private SourceReader sourceReader;
+    private ReadSessionCreator readSessionCreator;
     private AtomicInteger processingException = new AtomicInteger(0);
 
     private static final String FETCH_RECORD_THREAD = "pulsar-bigquery-source-fetch-record";
@@ -95,10 +96,8 @@ public class BigQuerySource implements BatchSource<GenericRecord> {
     @Override
     public void discover(Consumer<byte[]> taskConsumer) throws Exception {
         log.info("Generating streamList with a session.");
-        ReadSessionCreator readSessionCreator = new ReadSessionCreator(this.bigQuerySourceConfig);
-
-        ReadSessionResponse session = readSessionCreator.create(this.bigQuerySourceConfig.getSelectedFields(),
-                this.bigQuerySourceConfig.getFilters());
+        this.readSessionCreator = new ReadSessionCreator(this.bigQuerySourceConfig);
+        ReadSessionResponse session = this.readSessionCreator.createReadSession();
         log.info("session name={},discovered streams size={},streams={},row number={},avro schema={}",
                 session.getReadSession().getName(), session.getReadSession().getStreamsList().size(),
                 session.getReadSession().getStreamsList(), session.getReadTableInfo().getNumRows(),
@@ -207,16 +206,19 @@ public class BigQuerySource implements BatchSource<GenericRecord> {
         double finishRatio = (1.0 * completeCount.get()) / sessionCheckpoint.getTotalNum().longValue();
         long spentTime = System.currentTimeMillis() - sessionCheckpoint.getCreateTime();
         double estimatedTimeSeconds = (spentTime / finishRatio - spentTime) / 1000;
-        log.info("finishRatio={}%,estimatedTimeSeconds={}", finishRatio * 100, estimatedTimeSeconds);
+        log.info("finishRatio={}%,estimatedTimeSeconds={},uncompletedStreamSize={}", finishRatio * 100,
+                estimatedTimeSeconds, uncompletedStream.get());
         if (uncompletedStream.get() == 0) {
             sessionCheckpoint.setStateType(StateType.FINISH);
-            checkpointManager.updateSessionCheckpoint(sessionCheckpoint);
+            this.checkpointManager.updateSessionCheckpoint(sessionCheckpoint);
+            this.readSessionCreator.deleteTemporaryTable();
         }
     }
 
     @Override
     public void close() throws Exception {
         updateCheckpoint();
+        stateCheck();
         log.info("batch source close");
     }
 

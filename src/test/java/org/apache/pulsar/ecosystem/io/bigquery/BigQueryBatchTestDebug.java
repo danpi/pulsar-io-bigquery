@@ -29,7 +29,7 @@ import org.apache.pulsar.functions.LocalRunner;
 /**
  * The bigquery batch test.
  */
-public class BigQueryBatchTest {
+public class BigQueryBatchTestDebug {
     public static void main(final String[] args) throws Exception {
 
         final Map<String, Object> discoveryConfig = new HashMap<>();
@@ -39,7 +39,9 @@ public class BigQueryBatchTest {
         config.put("foo", "bar");
         config.put("projectId", "bigquery-dev-001");
         config.put("datasetName", "mydataset");
-        config.put("tableName", "bgDemo02");
+        config.put("tableName", "Produce");
+        config.put("sql", "select product,inventory FROM `bigquery-dev-001.mydataset.Produce` WHERE inventory>=20;");
+        config.put("expirationTimeInMinutes", 10);
 
         final BatchSourceConfig batchSourceConfig = BatchSourceConfig.builder()
                 .discoveryTriggererClassName(BigQueryOnceTrigger.class.getName())
