@@ -25,6 +25,9 @@ import java.util.Map;
 import org.apache.pulsar.ecosystem.io.bigquery.BigQuerySourceConfig;
 import org.apache.pulsar.io.core.SourceContext;
 
+/**
+ * ReadSessionCreator test. Just use the local debug test.
+ */
 public class ReadSessionCreatorTestDebug {
     private BigQuerySourceConfig config;
     private ReadSessionCreator readSessionCreator;

@@ -27,7 +27,7 @@ import org.apache.pulsar.ecosystem.io.bigquery.source.BigQueryOnceTrigger;
 import org.apache.pulsar.functions.LocalRunner;
 
 /**
- * The bigquery batch test.
+ * The bigquery batch test. Just use the local debug test.
  */
 public class BigQueryBatchTestDebug {
     public static void main(final String[] args) throws Exception {
