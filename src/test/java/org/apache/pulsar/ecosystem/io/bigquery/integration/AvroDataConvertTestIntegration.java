@@ -94,7 +94,7 @@ public class AvroDataConvertTestIntegration {
     public TableResult queryResult(BigQuery bigQuery) throws InterruptedException {
         QueryJobConfiguration queryConfig =
                 QueryJobConfiguration
-                        .newBuilder("SELECT * FROM affable-ray-226821.integration.avro_table")
+                        .newBuilder("SELECT * FROM bigquery-dev-001.integration.avro_table")
                         // Use standard SQL syntax for queries.
                         // See: https://cloud.google.com/bigquery/sql-reference/
                         .setUseLegacySql(false)

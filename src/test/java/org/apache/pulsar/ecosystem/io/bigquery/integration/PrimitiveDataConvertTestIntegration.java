@@ -102,7 +102,7 @@ public class PrimitiveDataConvertTestIntegration {
     public TableResult queryResult(BigQuery bigQuery, String tableName) throws InterruptedException {
         QueryJobConfiguration queryConfig =
                 QueryJobConfiguration
-                        .newBuilder("SELECT * FROM affable-ray-226821.integration." + tableName)
+                        .newBuilder("SELECT * FROM bigquery-dev-001.integration." + tableName)
                         // Use standard SQL syntax for queries.
                         // See: https://cloud.google.com/bigquery/sql-reference/
                         .setUseLegacySql(false)
