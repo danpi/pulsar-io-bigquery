@@ -3,7 +3,7 @@ configs:
   #
   # This field is *required*.
   #
-  projectId: "affable-ray-226821"
+  projectId: "bigquery-dev-001"
 
   # datasetName is BigQuery dataset name.
   #

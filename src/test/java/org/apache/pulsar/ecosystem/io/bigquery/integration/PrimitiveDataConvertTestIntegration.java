@@ -67,7 +67,7 @@ public class PrimitiveDataConvertTestIntegration {
             throws Exception {
         // 0. clean bigquery data.
         BigQueryConfig bigQueryConfig = new BigQueryConfig();
-        bigQueryConfig.setProjectId("affable-ray-226821");
+        bigQueryConfig.setProjectId("bigquery-dev-001");
         bigQueryConfig.setDatasetName("integration");
         bigQueryConfig.setTableName(tableName);
         BigQuery bigQuery = bigQueryConfig.createBigQuery();
