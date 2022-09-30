@@ -36,6 +36,9 @@ eval "${PULSAR_ADMIN} sinks localrun -a ${JAR_PATH} \
 echo "Waiting for sink and source ..."
 sleep 30
 
+echo "Verify Bigquery key exist"
+cat $SRC_DIR/.ci/integrations/bigquery-key.json
+
 echo "Run integration tests"
 export GOOGLE_APPLICATION_CREDENTIALS=$SRC_DIR/.ci/integrations/bigquery-key.json
 (cd "$SRC_DIR" && mvn -Dtest="*TestIntegration" test -DfailIfNoTests=false)
